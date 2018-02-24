@@ -6,20 +6,28 @@ client = MongoClient('mongodb://107.170.2.182:27017/')
 
 # Creates user if the user does not exist
 # email: string
+# password (hashed): string
 # name: string
 # age: number
 # location (city name): string
 # gender: string
 # reddit (username): string
-def add_user(email, name, age, location, gender, reddit):
+# RETURNS: 1 if the user was successfully added, and 0 if the user already exists
+def add_user(email, password, name, age, location, gender, reddit):
 	db = client.buddy
 	users = db.users
+
+	if (users.find_one({'email': email}) != None):
+		return 0
 	
 	# Get information from reddit account first
 	personality = pn.get_personality(pn.get_reddit_comments(reddit))
+	if (personality == None):
+		return 0
 
 	users.insert_one({
 		'email': email,
+		'password': password,
 		'name': name,
 		'age': age,
 		'location': location,
@@ -29,6 +37,7 @@ def add_user(email, name, age, location, gender, reddit):
 		'description': '',
 		'interest': {}
 	})
+	return 1
 
 # Sets the user's values to the new values
 # email: string
@@ -43,7 +52,7 @@ def update_user(email, name, age, location, gender, reddit, description, interes
 	db = client.buddy
 	users = db.users
 
-	if (users.find_one({'email': email}).reddit != reddit):
+	if (users.find_one({'email': email}) != None and users.find_one({'email': email}).reddit != reddit):
 		personality = pn.get_personality(pn.get_reddit_comments(reddit))
 		users.find_one_and_update({'email': email}, {'$set': {'reddit': reddit, 'personality': personality}})
 
@@ -61,6 +70,15 @@ def get_user(email):
 	db = client.buddy
 	users = db.users
 	return users.find_one({'email': email})
+
+def authenticate(email, password):
+	db = client.buddy
+	users = db.users
+
+	if (users.find_one({'email': email, 'password': password}) != None):
+		return 1
+	else:
+		return 0
 
 if __name__ == '__main__':
 	update_user("<email>", "<name>", 18, "<town>", "Male", "<reddit username>")
