@@ -40,6 +40,9 @@ def add_user(email, name, age, location, gender, reddit):
 # description: string
 # interest: JSON object
 def update_user(email, name, age, location, gender, reddit, description, interests):
+	db = client.buddy
+	users = db.users
+
 	if (users.find_one({'email': email}).reddit != reddit):
 		personality = pn.get_personality(pn.get_reddit_comments(reddit))
 		users.find_one_and_update({'email': email}, {'$set': {'reddit': reddit, 'personality': personality}})
@@ -55,6 +58,8 @@ def update_user(email, name, age, location, gender, reddit, description, interes
 
 
 def get_user(email):
+	db = client.buddy
+	users = db.users
 	return users.find_one({'email': email})
 
 if __name__ == '__main__':
